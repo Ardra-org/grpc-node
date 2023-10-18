@@ -47,6 +47,7 @@ type GeneratorOptions = Protobuf.IParseOptions & Protobuf.IConversionOptions & {
   outputTemplate: string;
   inputBranded: boolean;
   outputBranded: boolean;
+  esm?: boolean
 }
 
 class TextFormatter {
@@ -130,7 +131,7 @@ function getTypeInterfaceName(type: Protobuf.Type | Protobuf.Enum | Protobuf.Ser
 }
 
 function getImportLine(dependency: Protobuf.Type | Protobuf.Enum | Protobuf.Service, from: Protobuf.Type | Protobuf.Service | undefined, options: GeneratorOptions) {
-  const filePath = from === undefined ? './' + getImportPath(dependency) : getRelativeImportPath(from, dependency);
+  const filePath = (from === undefined ? './' + getImportPath(dependency) : getRelativeImportPath(from, dependency)).concat(options.esm ? ".js" : "");
   const {outputName, inputName} = useNameFmter(options);
   const typeInterfaceName = getTypeInterfaceName(dependency);
   let importedTypes: string;
@@ -877,6 +878,7 @@ async function runScript() {
     .option('outputTemplate', { string: true, default: `${templateStr}__Output` })
     .option('inputBranded', boolDefaultFalseOption)
     .option('outputBranded', boolDefaultFalseOption)
+    .default('esm', false)
     .coerce('longs', value => {
       switch (value) {
         case 'String': return String;
@@ -916,6 +918,7 @@ async function runScript() {
       outputTemplate: 'Template for mapping output or "restricted" type names',
       inputBranded: 'Output property for branded type for  "permissive" types with fullName of the Message as its value',
       outputBranded: 'Output property for branded type for  "restricted" types with fullName of the Message as its value',
+      esm: 'Whether to output files in ESM compatible format',
     }).demandOption(['outDir'])
     .demand(1)
     .usage('$0 [options] filenames...')
